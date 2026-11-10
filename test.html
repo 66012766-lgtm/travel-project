@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ทดสอบ Travel API</title>
+<style>
+  body { font-family: Tahoma, sans-serif; max-width: 860px; margin: 20px auto; padding: 0 12px; background: #f4f6fb; color: #222; }
+  h1 { font-size: 22px; }
+  fieldset { background: #fff; border: 1px solid #ccd3e0; border-radius: 8px; margin-bottom: 14px; padding: 12px 16px; }
+  legend { font-weight: bold; color: #1a4fa8; padding: 0 6px; }
+  label { display: inline-block; min-width: 110px; margin: 3px 0; }
+  input { padding: 5px 8px; border: 1px solid #aab; border-radius: 4px; margin: 2px 0; width: 230px; }
+  button { background: #1a4fa8; color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; cursor: pointer; margin-top: 6px; }
+  button:hover { background: #143f86; }
+  pre { background: #10151f; color: #8df0a8; padding: 12px; border-radius: 8px; min-height: 120px; overflow: auto; white-space: pre-wrap; }
+  .hint { color: #667; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>ทดสอบ Travel API</h1>
+<p class="hint">เปิดหน้านี้ผ่าน <b>http://localhost/travel_api/test.html</b> เท่านั้น (ไม่ใช่ดับเบิลคลิกไฟล์)</p>
+
+<fieldset>
+  <legend>1) สมัครสมาชิก</legend>
+  <label>ชื่อ-นามสกุล</label><input id="r_name" value="Test User"><br>
+  <label>อีเมล</label><input id="r_email" value="test@example.com"><br>
+  <label>รหัสผ่าน</label><input id="r_pass" value="123456"><br>
+  <label>เบอร์โทร</label><input id="r_phone" value="0812345678"><br>
+  <button onclick="doRegister()">สมัครสมาชิก</button>
+</fieldset>
+
+<fieldset>
+  <legend>2) เข้าสู่ระบบ</legend>
+  <label>อีเมล</label><input id="l_email" value="test@example.com"><br>
+  <label>รหัสผ่าน</label><input id="l_pass" value="123456"><br>
+  <button onclick="doLogin()">เข้าสู่ระบบ</button>
+</fieldset>
+
+<fieldset>
+  <legend>3) ค้นหา</legend>
+  <label>ต้นทาง</label><input id="s_from" placeholder="เว้นว่าง = ทั้งหมด"><br>
+  <label>ปลายทาง</label><input id="s_to" placeholder="เว้นว่าง = ทั้งหมด"><br>
+  <label>วันเดินทาง</label><input id="s_date" type="date"><br>
+  <button onclick="searchBus()">ค้นหารถทัวร์</button>
+  <button onclick="searchFlights()">ค้นหาเที่ยวบิน</button>
+</fieldset>
+
+<fieldset>
+  <legend>4) จองตั๋ว</legend>
+  <label>user_id</label><input id="b_user" value="1"><br>
+  <label>ประเภท</label>
+  <select id="b_type"><option value="bus">bus (รถทัวร์)</option><option value="flight">flight (เที่ยวบิน)</option></select><br>
+  <label>trip_id</label><input id="b_trip" value="1"> <span class="hint">(bus_id หรือ flight_id)</span><br>
+  <label>วันเดินทาง</label><input id="b_date" type="date"><br>
+  <label>ที่นั่ง</label><input id="b_seats" value="5,6"> <span class="hint">(คั่นด้วย , เช่น 5,6)</span><br>
+  <label>ชื่อผู้โดยสาร</label><input id="b_names" value="Somchai Jaidee,Somying Jaidee"> <span class="hint">(จำนวนเท่ากับที่นั่ง)</span><br>
+  <button onclick="doBook()">จองตั๋ว</button>
+</fieldset>
+
+<fieldset>
+  <legend>5) ชำระเงิน</legend>
+  <label>user_id</label><input id="p_user" value="1"><br>
+  <label>รหัสการจอง</label><input id="p_booking" placeholder="เช่น BK261107334089"><br>
+  <label>วิธีชำระ</label>
+  <select id="p_method" onchange="toggleMethod()">
+    <option value="card">บัตร (card)</option>
+    <option value="promptpay">พร้อมเพย์ (promptpay)</option>
+    <option value="bank">โอนธนาคาร (bank)</option>
+  </select><br>
+  <label>โค้ดส่วนลด</label><input id="p_promo" placeholder="เช่น WELCOME10 (ไม่ใส่ก็ได้)"><br>
+  <div id="m_card">
+    <label>เลขบัตร</label><input id="p_cardno" value="4111111111111111"> <span class="hint">(เลขทดสอบ)</span><br>
+    <label>ชื่อบนบัตร</label><input id="p_cardname" value="SOMCHAI JAIDEE"><br>
+    <label>หมดอายุ (MM/YY)</label><input id="p_cardexp" value="12/29"><br>
+  </div>
+  <div id="m_promptpay" style="display:none">
+    <label>เบอร์พร้อมเพย์</label><input id="p_pp" value="0812345678"><br>
+  </div>
+  <div id="m_bank" style="display:none">
+    <label>ธนาคาร</label><input id="p_bank" value="กสิกรไทย"><br>
+    <label>เลขบัญชี</label><input id="p_accno" value="1234567890"><br>
+    <label>ชื่อบัญชี</label><input id="p_accname" value="สมชาย ใจดี"><br>
+  </div>
+  <button onclick="doPay()">ชำระเงิน</button>
+</fieldset>
+
+<fieldset>
+  <legend>6) ประวัติการจอง</legend>
+  <label>user_id</label><input id="h_user" value="1"><br>
+  <button onclick="myBookings()">ดูประวัติ</button>
+</fieldset>
+
+<fieldset>
+  <legend>7) แอดมิน / ยกเลิกการจอง</legend>
+  <p class="hint">ล็อกอินแล้วหน้านี้จะจำ token ไว้ (ล็อกอินอันหลังทับอันก่อน) ยกเลิกการจองใช้ token ของใครก็ได้ที่ล็อกอินล่าสุด</p>
+  <label>อีเมลแอดมิน</label><input id="a_email" value="admin@example.com"><br>
+  <label>รหัสผ่าน</label><input id="a_pass" value="Admin@1234"><br>
+  <button onclick="adminLogin()">เข้าสู่ระบบแอดมิน</button>
+  <hr>
+  <label>กรองสถานะ</label>
+  <select id="a_status"><option value="">ทั้งหมด</option><option>pending</option><option>confirmed</option><option>cancelled</option></select><br>
+  <label>ค้นหา</label><input id="a_q" placeholder="รหัสจอง / ชื่อ / อีเมล"><br>
+  <button onclick="adminBookings()">ดูรายการจองทั้งหมด</button>
+  <hr>
+  <label>รหัสการจอง</label><input id="a_booking" placeholder="เช่น BK261107334089"><br>
+  <label>การดำเนินการ</label>
+  <select id="a_action"><option value="approve">อนุมัติการโอน</option><option value="reject">ปฏิเสธการโอน</option></select><br>
+  <button onclick="adminConfirm()">ยืนยันการโอน (แอดมิน)</button>
+  <button onclick="cancelBooking()">ยกเลิกการจอง</button>
+</fieldset>
+
+<h3>ผลลัพธ์</h3>
+<pre id="out">กดปุ่มด้านบนเพื่อทดสอบ ผลจะแสดงที่นี่</pre>
+
+<script>
+  // ตั้งค่าวันเริ่มต้นเป็น 30 วันข้างหน้า
+  (function () {
+    var d = new Date(); d.setDate(d.getDate() + 30);
+    var s = d.toISOString().slice(0, 10);
+    document.getElementById('s_date').value = s;
+    document.getElementById('b_date').value = s;
+  })();
+
+  var $ = function (id) { return document.getElementById(id).value.trim(); };
+  var token = '';   // token จากการล็อกอินล่าสุด
+
+  function show(status, data) {
+    document.getElementById('out').textContent = 'HTTP ' + status + '\n\n' + JSON.stringify(data, null, 2);
+  }
+
+  async function call(url, options) {
+    try {
+      options = options || {};
+      options.headers = Object.assign({}, options.headers || {});
+      if (token) options.headers['Authorization'] = 'Bearer ' + token;
+      var res = await fetch(url, options);
+      var text = await res.text();
+      var data;
+      try { data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+      if (data && data.token) token = data.token;
+      show(res.status, data);
+    } catch (err) {
+      document.getElementById('out').textContent = 'เรียก API ไม่ได้: ' + err + '\n(ตรวจว่า Apache เปิดอยู่ และเปิดหน้านี้ผ่าน http://localhost/...)';
+    }
+  }
+
+  function post(url, body) {
+    return call(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  }
+
+  function doRegister() {
+    post('register.php', { full_name: $('r_name'), email: $('r_email'), password: $('r_pass'), phone: $('r_phone') });
+  }
+
+  function doLogin() {
+    post('login.php', { email: $('l_email'), password: $('l_pass') });
+  }
+
+  function query() {
+    return 'origin=' + encodeURIComponent($('s_from')) + '&destination=' + encodeURIComponent($('s_to')) + '&date=' + $('s_date');
+  }
+  function searchBus()     { call('search_bus.php?' + query()); }
+  function searchFlights() { call('search_flights.php?' + query()); }
+
+  function doBook() {
+    var seats = $('b_seats').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var names = $('b_names').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var passengers = names.map(function (n, i) { return { name: n, id_card: '110170000000' + (i + 1) }; });
+    post('create_booking.php', {
+      user_id: parseInt($('b_user'), 10),
+      booking_type: $('b_type'),
+      trip_id: parseInt($('b_trip'), 10),
+      travel_date: $('b_date'),
+      seats: seats,
+      passengers: passengers
+    });
+  }
+
+  function toggleMethod() {
+    var m = $('p_method');
+    ['card', 'promptpay', 'bank'].forEach(function (k) {
+      document.getElementById('m_' + k).style.display = (k === m) ? '' : 'none';
+    });
+  }
+
+  function doPay() {
+    var m = $('p_method');
+    var body = { user_id: parseInt($('p_user'), 10), booking_id: $('p_booking'), payment_method: m };
+    if ($('p_promo') !== '') body.promo_code = $('p_promo');
+    if (m === 'card') {
+      body.card_number = $('p_cardno'); body.card_holder_name = $('p_cardname'); body.card_expiry = $('p_cardexp');
+    } else if (m === 'promptpay') {
+      body.promptpay_phone = $('p_pp');
+    } else {
+      body.bank_name = $('p_bank'); body.bank_account_number = $('p_accno'); body.bank_account_name = $('p_accname');
+    }
+    post('create_payment.php', body);
+  }
+
+  function adminLogin()    { post('admin_login.php', { email: $('a_email'), password: $('a_pass') }); }
+  function adminBookings() { call('admin_bookings.php?status=' + encodeURIComponent($('a_status')) + '&q=' + encodeURIComponent($('a_q'))); }
+  function adminConfirm()  { post('admin_confirm_payment.php', { booking_id: $('a_booking'), action: $('a_action') }); }
+  function cancelBooking() { post('cancel_booking.php', { booking_id: $('a_booking') }); }
+
+  function myBookings() { call('my_bookings.php?user_id=' + $('h_user')); }
+</script>
+</body>
+</html>
